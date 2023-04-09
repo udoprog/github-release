@@ -5,4 +5,4 @@ WORKDIR /action
 
 RUN npm install --production
 
-ENTRYPOINT ["node", "/action/main.js"]
+ENTRYPOINT ["node", "/action/main.mjs"]

@@ -30,7 +30,7 @@ function boolean(value, defaultValue) {
 async function runOnce() {
   const name = core.getInput('name');
   const token = core.getInput('token');
-  const extraFiles = core.getInput('files');
+  const files = core.getInput('files');
   const prerelease = boolean(core.getInput('prerelease'), name === 'nightly');
   const repo = ensure("context repo", github.context.repo.repo);
   const owner = ensure("context owner", github.context.repo.owner);
@@ -41,12 +41,12 @@ async function runOnce() {
   core.info(`owner: ${owner}`);
   core.info(`sha: ${sha}`);
 
-  let files = [];
+  let bundled = [];
 
-  if (!!extraFiles) {
-    for (const file of glob.sync(extraFiles)) {
+  if (!!files) {
+    for (const file of glob.sync(files)) {
       core.info(`Adding extra file ${file}`);
-      files.push(file);
+      bundled.push(file);
     }
   }
 
@@ -58,7 +58,7 @@ async function runOnce() {
 
   for (const artifact of downloadResponse) {
     core.info(`Artifact ${artifact.artifactName} was downloaded to ${artifact.downloadPath}`);
-    files.push(artifact.downloadPath);
+    bundled.push(artifact.downloadPath);
   }
 
   const options = {
@@ -127,11 +127,11 @@ async function runOnce() {
   const release_id = release.data.id;
 
   // Upload all the relevant assets for this release as just general blobs.
-  for (const file of files) {
+  for (const file of bundled) {
     const size = fs.statSync(file).size;
     const name = path.basename(file);
 
-    await runWithRetry(async function () {
+    await retry(async function () {
       // We can't overwrite assets, so remove existing ones from a previous try.
       let assets = await octokit.rest.repos.listReleaseAssets({
         owner,
@@ -159,7 +159,7 @@ async function runOnce() {
   }
 }
 
-async function runWithRetry(f) {
+async function retry(f) {
   const retries = 10;
   const maxDelay = 4000;
   let delay = 1000;
@@ -182,7 +182,7 @@ async function runWithRetry(f) {
 }
 
 async function run() {
-  await runWithRetry(runOnce);
+  await retry(runOnce);
 }
 
 run().catch(err => {
