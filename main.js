@@ -18,10 +18,19 @@ function ensure(what, value) {
   return value;
 }
 
+function boolean(value, defaultValue) {
+  if (value === undefined || value == null || value === "") {
+    return defaultValue;
+  }
+
+  return value === true || value === "yes";
+}
+
 async function runOnce() {
   const files = core.getInput('files');
   const name = core.getInput('name');
   const token = core.getInput('token');
+  const prerelease = boolean(core.getInput('prerelease'), name === 'nightly');
   const repo = ensure("context repo", github.context.repo.repo);
   const owner = ensure("context owner", github.context.repo.owner);
   const sha = ensure("context sha", core.getInput('sha') || github.context.sha);
@@ -51,7 +60,7 @@ async function runOnce() {
     }
   
     const release_id = release.id;
-    core.info(`deleting release ${release_id}`);
+    core.info(`Deleting release ${release_id}`);
     await octokit.rest.repos.deleteRelease({ owner, repo, release_id });
   }
 
@@ -84,7 +93,7 @@ async function runOnce() {
 
   // Creates an official GitHub release for this `tag`, and if this is `dev`
   // then we know that from the previous block this should be a fresh release.
-  core.info(`creating a release`);
+  core.info("Creating a release");
 
   const release = await octokit.rest.repos.createRelease({
     owner,
@@ -92,7 +101,7 @@ async function runOnce() {
     name,
     tag_name: name,
     target_commitish: sha,
-    prerelease: name === 'nightly',
+    prerelease,
   });
 
   const release_id = release.data.id;

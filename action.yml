@@ -15,6 +15,13 @@ inputs:
   sha:
     description: The SHA reference that the created release will be pointed to.
     required: false
+  prerelease:
+    description: >
+      Set to `yes` or `true` if this is a prerelease. If this is an empty
+      string, `null` or `undefined` it will be set to `true` if `name` is
+      `nightly`. Any other value counts as `false`.
+    required: false
+    default: false
 
 runs:
   using: 'docker'
