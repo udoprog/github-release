@@ -6,11 +6,11 @@ existing releases and does things in a very opinionated way.
 
 ## Inputs
 
+* `files`: Glob list of files to publish. Such as `dist/*`.
+  **required**
 * `name`: Name of release to create. `nightly` forces the `nightly` tag to
   update. **required**
 * `token`: Set by you to `${{secrets.GITHUB_TOKEN}}`. **required**
-* `files`: Glob list of extra files to publish. Such as `resources/*`.
-  **optional**
 * `sha`: The SHA reference that the created release will be pointed to.
   **optional**
 * `prerelease`: Set to `yes` or `true` if this is a prerelease. If this is an
@@ -65,6 +65,7 @@ jobs:
     # - ${{steps.release.outputs.prerelease}} is set to yes if the current tag is a prerelease, such as `1.2.0-beta.1`. Otherwise `no`.
     - uses: actions/upload-artifact@v3
       with:
+        name: dist-${{matrix.os}}
         path: dist
 
   publish:
@@ -74,8 +75,15 @@ jobs:
     - uses: actions/checkout@v3
     - uses: udoprog/github-release@tag
       id: release
+    - uses: actions/download-artifact@v3
+      with: {name: dist-macos-latest, path: dist}
+    - uses: actions/download-artifact@v3
+      with: {name: dist-windows-latest, path: dist}
+    - uses: actions/download-artifact@v3
+      with: {name: dist-ubuntu-latest, path: dist}
     - uses: udoprog/github-release@v1
       with:
+        files: "dist/*"
         token: ${{secrets.GITHUB_TOKEN}}
         name: ${{steps.release.outputs.tag}}
         prerelease: ${{steps.release.outputs.prerelease}}
@@ -130,6 +138,7 @@ jobs:
     # - ${{steps.release.outputs.channel}} is either `nightly` or a date like `2023-04-09`.
     - uses: actions/upload-artifact@v3
       with:
+        name: dist-${{matrix.os}}
         path: dist
 
   publish:
@@ -141,8 +150,15 @@ jobs:
       id: release
       with:
         channel: ${{github.event.inputs.channel}}
+    - uses: actions/download-artifact@v3
+      with: {name: dist-macos-latest, path: dist}
+    - uses: actions/download-artifact@v3
+      with: {name: dist-windows-latest, path: dist}
+    - uses: actions/download-artifact@v3
+      with: {name: dist-ubuntu-latest, path: dist}
     - uses: udoprog/github-release@v1
       with:
+        files: "dist/*"
         token: ${{secrets.GITHUB_TOKEN}}
         name: ${{steps.release.outputs.channel}}
 ```

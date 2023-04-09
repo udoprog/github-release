@@ -1,9 +1,8 @@
 {
   "name": "udoprog-github-release",
   "version": "0.0.0",
-  "main": "main.mjs",
+  "main": "main.js",
   "dependencies": {
-    "@actions/artifact": "^1.1.1",
     "@actions/core": "^1.6",
     "@actions/github": "^5.0",
     "glob": "^7.1.5"

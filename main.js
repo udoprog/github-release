@@ -1,11 +1,10 @@
 // This is based off https://github.com/rust-lang/rust-analyzer/tree/5aa0d129de725eee28099c6f52ba495d135b6c13/.github/actions/github-release
 
-import * as artifact from '@actions/artifact'
-import * as core from '@actions/core'
-import * as fs from 'fs'
-import * as github from '@actions/github'
-import * as glob from 'glob'
-import * as path from 'path'
+const core = require('@actions/core');
+const fs = require('fs');
+const github = require('@actions/github');
+const glob = require('glob');
+const path = require('path');
 
 function sleep(milliseconds) {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
@@ -28,38 +27,19 @@ function boolean(value, defaultValue) {
 }
 
 async function runOnce() {
+  const files = core.getInput('files');
   const name = core.getInput('name');
   const token = core.getInput('token');
-  const files = core.getInput('files');
   const prerelease = boolean(core.getInput('prerelease'), name === 'nightly');
   const repo = ensure("context repo", github.context.repo.repo);
   const owner = ensure("context owner", github.context.repo.owner);
   const sha = ensure("context sha", core.getInput('sha') || github.context.sha);
 
+  core.info(`files: ${files}`);
   core.info(`name: ${name}`);
   core.info(`repo: ${repo}`);
   core.info(`owner: ${owner}`);
   core.info(`sha: ${sha}`);
-
-  let bundled = [];
-
-  if (!!files) {
-    for (const file of glob.sync(files)) {
-      core.info(`Adding extra file ${file}`);
-      bundled.push(file);
-    }
-  }
-
-  // download all artifacts
-  const artifactClient = artifact.create()
-  const downloadResponse = await artifactClient.downloadAllArtifacts();
-
-  core.info(`There were ${downloadResponse.length} artifacts downloaded`);
-
-  for (const artifact of downloadResponse) {
-    core.info(`Artifact ${artifact.artifactName} was downloaded to ${artifact.downloadPath}`);
-    bundled.push(artifact.downloadPath);
-  }
 
   const options = {
     request: {
@@ -127,7 +107,7 @@ async function runOnce() {
   const release_id = release.data.id;
 
   // Upload all the relevant assets for this release as just general blobs.
-  for (const file of bundled) {
+  for (const file of glob.sync(files)) {
     const size = fs.statSync(file).size;
     const name = path.basename(file);
 
