@@ -1,0 +1,77 @@
+name: channel string for github releases
+author: John-John Tedro <udoprog@tedro.se>
+description: |
+  Make a channel name depending on build circumstances that can be used for building.
+
+  The output `channel` depends on which `github.event_name` is being dispatched:
+  * For `github.event_name == 'push'` we use the current date, as provided by `$(date --iso -u)`.
+  * For `github.event_name == 'schedule'` we use the value of the `channel` input, which defaults to `nightly`.
+  * For `github.event_name == 'workflow_dispatch'` we use the value of the `channel` input, which defaults to `nightly`.
+
+branding:
+  icon: activity
+  color: purple
+
+inputs:
+  channel:
+    description: >-
+      Describes the channel being built. Can curently be `nightly` or `date`. If
+      `nightly` is used and the appropriate event is triggered this will result
+      in a `channel` of `nightly`. If set to `date` the current date will be
+      used instead such as `2023-04-09`.
+
+      For `github.event_name == 'push'` this option is ignored, and a dated
+      release is used.
+    default: nightly
+
+outputs:
+  channel:
+    description: The channel being built.
+    value: ${{steps.out.outputs.channel}}
+
+runs:
+  using: composite
+  steps:
+  - id: out
+    name: Find channel
+    shell: bash
+    run: |
+      github_event_name="${{github.event_name}}"
+      inputs_channel="${{inputs.channel}}"
+
+      echo "github_event_name: $github_event_name"
+      echo "inputs_channel: $inputs_channel"
+
+      case $github_event_name in
+        push)
+          channel="$(date --iso -u)"
+          ;;
+        schedule)
+          if [[ -z $inputs_channel ]]; then
+            channel="nightly"
+          else
+            channel="$inputs_channel"
+          fi
+          ;;
+        workflow_dispatch)
+          case $inputs_channel in
+            nightly)
+              channel="nightly"
+              ;;
+            date)
+              channel="$(date --iso -u)"
+              ;;
+            *)
+              echo "Unsupported channel: $inputs_channel"
+              exit 1
+              ;;
+          esac
+          ;;
+        *)
+          echo "Unsupported event: $GITHUB_EVENT_NAME"
+          exit 1
+          ;;
+      esac
+
+      echo "channel: $channel"
+      echo channel=$channel >> $GITHUB_OUTPUT
