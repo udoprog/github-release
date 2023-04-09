@@ -1,0 +1,43 @@
+name: extract a tag from a github reference
+author: John-John Tedro <udoprog@tedro.se>
+description: |
+  Extracts a tag from the current github reference.
+
+branding:
+  icon: activity
+  color: purple
+
+outputs:
+  tag:
+    description: The tag extracted from `refs/tags/*`.
+    value: ${{steps.out.outputs.tag}}
+  prerelease:
+    description: >-
+      Set to `yes` if tag corresponds to a prerelease. Like `1.2.0-beta.1`.
+      Otherwise `no`.
+    value: ${{steps.out.outputs.prerelease}}
+
+runs:
+  using: composite
+  steps:
+  - id: out
+    name: Find tag
+    shell: bash
+    run: |
+      tag=${GITHUB_REF#*/tags/}
+
+      if [[ $tag == $GITHUB_REF ]]; then
+        echo "Unsupported reference: `$GITHUB_REF`, expected `refs/tags/*`"
+        exit 1
+      fi
+
+      if [[ $tag == *"-"* ]]; then
+        prerelease="yes"
+      else
+        prerelease="no"
+      fi
+
+      echo "prerelease: $prerelease"
+      echo "tag: $tag"
+      echo "prerelease=$prerelease" >> $GITHUB_OUTPUT
+      echo "tag=$tag" >> $GITHUB_OUTPUT
