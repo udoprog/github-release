@@ -3,15 +3,15 @@ author: John-John Tedro
 description: Create a GitHub Release with sensible defaults.
 
 inputs:
-  token:
-    description: Github token to use, set by you to `{{secrets.GITHUB_TOKEN}}`.
-    required: true
   name:
     description: Name of release to create. `nightly` forces the `nightly` tag to update.
     required: true
-  files:
-    description: Glob list of files to publish. Such as `dist/*`.
+  token:
+    description: Github token to use, set by you to `{{secrets.GITHUB_TOKEN}}`.
     required: true
+  files:
+    description: Glob list of extra files to publish. Such as `resources/*`.
+    required: false
   sha:
     description: The SHA reference that the created release will be pointed to.
     required: false
