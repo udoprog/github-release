@@ -6,16 +6,18 @@ existing releases and does things in a very opinionated way.
 
 ## Inputs
 
+* `name`: Name of release to create. If set to `nightly` the `tag` option will
+  be set. **required**
 * `files`: Glob list of files to publish. Such as `dist/*`.
   **required**
-* `name`: Name of release to create. `nightly` forces the `nightly` tag to
-  update. **required**
 * `token`: Set by you to `${{secrets.GITHUB_TOKEN}}`. **required**
 * `sha`: The SHA reference that the created release will be pointed to.
   **optional**
 * `prerelease`: Set to `yes` or `true` if this is a prerelease. If this is an
   empty string, `null` or `undefined` it will be set to `true` if `name` is
   `nightly`. Any other value counts as `false`. **optional**
+* `tag`: If set to `yes` or `true`, will ensure that a tag matching the `name`
+  input exists. **optional**
 
 ## Additional actions in this repo
 

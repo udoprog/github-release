@@ -3,11 +3,13 @@ author: John-John Tedro
 description: Create a GitHub Release with sensible defaults.
 
 inputs:
+  name:
+    description: >
+      Name of release to create. If set to `nightly` the `tag` option will be
+      set.
+    required: true
   files:
     description: Glob list of files to publish. Such as `dist/*`.
-    required: true
-  name:
-    description: Name of release to create. `nightly` forces the `nightly` tag to update.
     required: true
   token:
     description: Github token to use, set by you to `{{secrets.GITHUB_TOKEN}}`.
@@ -20,6 +22,12 @@ inputs:
       Set to `yes` or `true` if this is a prerelease. If this is an empty
       string, `null` or `undefined` it will be set to `true` if `name` is
       `nightly`. Any other value counts as `false`.
+    required: false
+    default: false
+  tag:
+    description: >
+      If set to `yes` or `true`, will ensure that a tag matching the `name`
+      input exists.
     required: false
     default: false
 

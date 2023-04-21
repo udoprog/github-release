@@ -23,13 +23,14 @@ function boolean(value, defaultValue) {
     return defaultValue;
   }
 
-  return value === true || value === "yes";
+  return value === true || value === "yes" || value === "true";
 }
 
 async function runOnce() {
   const files = core.getInput('files');
   const name = core.getInput('name');
   const token = core.getInput('token');
+  const tag = boolean(core.getInput('tag'), name === 'nightly');
   const prerelease = boolean(core.getInput('prerelease'), name === 'nightly');
   const repo = ensure("context repo", github.context.repo.repo);
   const owner = ensure("context owner", github.context.repo.owner);
@@ -40,6 +41,7 @@ async function runOnce() {
   core.info(`repo: ${repo}`);
   core.info(`owner: ${owner}`);
   core.info(`sha: ${sha}`);
+  core.info(`prerelease: ${prerelease}`);
 
   const options = {
     request: {
@@ -65,26 +67,26 @@ async function runOnce() {
   }
 
   // We also need to update the `dev` tag while we're at it on the `dev` branch.
-  if (name == 'nightly') {
+  if (tag) {
     try {
-      core.info(`updating nightly tag`);
+      core.info(`Updating ${name} tag`);
   
       await octokit.rest.git.updateRef({
         owner,
         repo,
-        ref: 'tags/nightly',
+        ref: `tags/${name}`,
         sha,
         force: true,
       });
     } catch (e) {
       core.error(e);
-      core.info(`creating nightly tag`);
+      core.info(`Creating ${name} tag`);
 
       await octokit.rest.git.createTag({
         owner,
         repo,
-        tag: 'nightly',
-        message: 'nightly release',
+        tag: name,
+        message: `${name} release`,
         object: sha,
         type: 'commit',
       });
@@ -118,15 +120,16 @@ async function runOnce() {
         repo,
         release_id
       });
+
       for (const asset of assets.data) {
         if (asset.name === name) {
-          core.info(`delete asset ${name}`);
+          core.info(`Delete asset ${name}`);
           const asset_id = asset.id;
           await octokit.rest.repos.deleteReleaseAsset({ owner, repo, asset_id });
         }
       }
 
-      core.info(`upload ${file}`);
+      core.info(`Upload ${file}`);
       const headers = { 'content-length': size, 'content-type': 'application/octet-stream' };
       const data = fs.createReadStream(file);
       await octokit.rest.repos.uploadReleaseAsset({
@@ -142,6 +145,7 @@ async function runOnce() {
 async function retry(f) {
   const retries = 10;
   const maxDelay = 4000;
+
   let delay = 1000;
 
   for (let i = 0; i < retries; i++) {
@@ -149,13 +153,15 @@ async function retry(f) {
       await f();
       break;
     } catch (e) {
-      if (i === retries - 1)
+      if (i === retries - 1) {
         throw e;
+      }
 
       core.error(e);
-      const currentDelay = Math.round(Math.random() * delay);
-      core.info(`sleeping ${currentDelay} ms`);
-      await sleep(currentDelay);
+
+      const current = Math.round(delay + Math.random() * 1000);
+      core.info(`Sleeping ${current} ms`);
+      await sleep(current);
       delay = Math.min(delay * 2, maxDelay);
     }
   }
